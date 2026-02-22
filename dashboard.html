@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OpenClaw Dashboard — FaceBrasil</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:#0a0b0f;--bg2:#0f1117;--bg3:#151820;--surface:#1a1e2a;--surface2:#202535;
+    --border:#252a3a;--border2:#2e3548;--accent:#4f8ef7;--accent2:#7b5ef8;
+    --accent3:#3dd68c;--warn:#f7a94f;--danger:#f75454;--text:#e8eaf2;
+    --text2:#8892b0;--text3:#4a5270;--mono:'Space Mono',monospace;
+    --sans:'Syne',sans-serif;--radius:10px;--radius2:6px;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:100vh;display:flex}
+  .sidebar{width:220px;min-height:100vh;background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;position:fixed;top:0;left:0;bottom:0;z-index:100}
+  .sidebar-logo{padding:24px 20px 20px;border-bottom:1px solid var(--border)}
+  .logo-mark{display:flex;align-items:center;gap:10px}
+  .logo-icon{width:34px;height:34px;background:linear-gradient(135deg,var(--accent),var(--accent2));border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:18px}
+  .logo-text{font-size:15px;font-weight:800;letter-spacing:-0.5px}
+  .logo-sub{font-size:10px;color:var(--text3);font-family:var(--mono);margin-top:1px}
+  .nav{flex:1;padding:16px 12px;display:flex;flex-direction:column;gap:2px}
+  .nav-item{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:var(--radius2);cursor:pointer;color:var(--text2);font-size:13px;font-weight:600;transition:all .15s;user-select:none}
+  .nav-item:hover{background:var(--surface);color:var(--text)}
+  .nav-item.active{background:rgba(79,142,247,.12);color:var(--accent)}
+  .nav-item .nav-icon{font-size:15px;width:18px;text-align:center}
+  .nav-section{font-size:10px;font-family:var(--mono);color:var(--text3);letter-spacing:1px;padding:12px 12px 4px;text-transform:uppercase}
+  .sidebar-footer{padding:16px;border-top:1px solid var(--border)}
+  .system-status{background:var(--surface);border-radius:var(--radius2);padding:10px 12px;font-size:11px;font-family:var(--mono)}
+  .status-row{display:flex;justify-content:space-between;align-items:center;padding:2px 0;color:var(--text2)}
+  .dot{width:6px;height:6px;border-radius:50%;display:inline-block}
+  .dot-green{background:var(--accent3);box-shadow:0 0 6px var(--accent3)}
+  .dot-blue{background:var(--accent)}.dot-warn{background:var(--warn)}
+  .main{margin-left:220px;flex:1;display:flex;flex-direction:column;min-height:100vh}
+  .topbar{height:60px;background:var(--bg2);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 28px;position:sticky;top:0;z-index:50}
+  .topbar-title{font-size:15px;font-weight:700}
+  .topbar-sub{font-size:11px;color:var(--text3);font-family:var(--mono);margin-top:1px}
+  .topbar-actions{display:flex;gap:10px;align-items:center}
+  .btn{padding:7px 14px;border-radius:var(--radius2);font-size:12px;font-family:var(--sans);font-weight:700;cursor:pointer;border:none;transition:all .15s}
+  .btn-primary{background:var(--accent);color:#fff}.btn-primary:hover{background:#6a9df8}
+  .btn-ghost{background:var(--surface);color:var(--text2);border:1px solid var(--border)}.btn-ghost:hover{color:var(--text);border-color:var(--border2)}
+  .tabs{display:flex;padding:0 28px;border-bottom:1px solid var(--border);background:var(--bg2)}
+  .tab{padding:14px 18px;font-size:13px;font-weight:600;color:var(--text2);cursor:pointer;border-bottom:2px solid transparent;transition:all .15s}
+  .tab:hover{color:var(--text)}.tab.active{color:var(--accent);border-bottom-color:var(--accent)}
+  .content{flex:1;padding:28px}
+  .section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}
+  .section-title{font-size:14px;font-weight:800}
+  .section-count{font-size:11px;color:var(--text3);font-family:var(--mono);margin-top:2px}
+  .stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px}
+  .stat-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px}
+  .stat-value{font-size:28px;font-weight:800;letter-spacing:-1px;font-family:var(--mono)}
+  .stat-label{font-size:11px;color:var(--text2);margin-top:2px}
+  .stat-sub{font-size:10px;color:var(--text3);font-family:var(--mono);margin-top:4px}
+  .heartbeat-bar{display:flex;gap:2px;margin-top:6px}
+  .hb-tick{width:3px;border-radius:2px;background:var(--accent3);opacity:.3}
+  .hb-tick.active{opacity:1}
+  .teams-row{display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap}
+  .team-pill{display:flex;align-items:center;gap:8px;padding:7px 14px;border-radius:30px;border:1px solid;font-size:12px;font-weight:700;cursor:pointer;transition:all .15s;user-select:none;opacity:.55}
+  .team-pill.active{opacity:1}.team-pill:hover{opacity:.85}
+  .team-members-count{font-size:10px;font-family:var(--mono);padding:1px 6px;border-radius:10px;background:rgba(255,255,255,.08)}
+  .agents-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px}
+  .agent-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;transition:border-color .2s,transform .15s}
+  .agent-card:hover{border-color:var(--border2);transform:translateY(-2px)}
+  .agent-card-accent{height:3px;width:100%}
+  .agent-card-body{padding:18px}
+  .agent-card-head{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:12px}
+  .agent-avatar{width:44px;height:44px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0}
+  .agent-info{flex:1;padding-left:12px}
+  .agent-name{font-size:15px;font-weight:800;letter-spacing:-0.3px}
+  .agent-role{font-size:11px;color:var(--text2);font-family:var(--mono);margin-top:2px}
+  .agent-status-badge{display:flex;align-items:center;gap:5px;padding:4px 8px;border-radius:20px;font-size:10px;font-family:var(--mono);font-weight:700;flex-shrink:0}
+  .status-online{background:rgba(61,214,140,.12);color:var(--accent3)}
+  .status-busy{background:rgba(247,169,79,.12);color:var(--warn)}
+  .status-idle{background:rgba(79,142,247,.12);color:var(--accent)}
+  .agent-teams{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:10px}
+  .team-badge{display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:4px;font-size:10px;font-family:var(--mono);font-weight:700;letter-spacing:.3px;border:1px solid}
+  .team-badge .tbdot{width:5px;height:5px;border-radius:50%}
+  .agent-commands{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:12px}
+  .cmd-chip{padding:2px 7px;border-radius:4px;font-size:10px;font-family:var(--mono);font-weight:700;background:rgba(79,142,247,.08);color:var(--accent);border:1px solid rgba(79,142,247,.18);cursor:default;transition:background .12s}
+  .cmd-chip:hover{background:rgba(79,142,247,.18)}
+  .agent-desc{font-size:12px;color:var(--text2);line-height:1.6;margin-bottom:14px}
+  .agent-meta{display:flex;flex-direction:column;gap:5px}
+  .meta-row{display:flex;align-items:center;gap:8px;font-size:11px;color:var(--text2);font-family:var(--mono)}
+  .meta-label{color:var(--text3);width:70px;flex-shrink:0}
+  .meta-value{color:var(--text)}
+  .agent-card-footer{padding:12px 18px;border-top:1px solid var(--border);display:flex;gap:8px;background:rgba(0,0,0,.15)}
+  .btn-sm{padding:5px 10px;font-size:11px;border-radius:5px;font-weight:700;cursor:pointer;border:1px solid var(--border);background:transparent;color:var(--text2);font-family:var(--sans);transition:all .15s}
+  .btn-sm:hover{background:var(--surface2);color:var(--text)}
+  .tc-core{--tc:#4f8ef7}.tc-backend{--tc:#7b5ef8}.tc-frontend{--tc:#3dd68c}.tc-marketing{--tc:#f7a94f}
+  .team-badge{color:var(--tc);border-color:color-mix(in srgb,var(--tc) 30%,transparent);background:color-mix(in srgb,var(--tc) 10%,transparent)}
+  .team-badge .tbdot{background:var(--tc)}
+  .workspace-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px}
+  .wfolder{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;cursor:pointer;transition:all .15s}
+  .wfolder:hover{border-color:var(--accent);background:var(--surface2)}
+  .folder-head{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+  .folder-icon{font-size:24px}
+  .folder-name{font-size:14px;font-weight:800;letter-spacing:-0.2px}
+  .folder-desc{font-size:11px;color:var(--text2);line-height:1.6;margin-bottom:12px}
+  .folder-files{display:flex;flex-direction:column;gap:4px}
+  .file-item{display:flex;align-items:center;gap:7px;padding:5px 8px;border-radius:5px;background:var(--bg3);font-size:11px;font-family:var(--mono);color:var(--text2);transition:all .12s}
+  .file-item:hover{background:var(--surface2);color:var(--text)}
+  .fext{padding:1px 5px;border-radius:3px;font-size:9px;font-weight:700;background:rgba(79,142,247,.15);color:var(--accent);flex-shrink:0}
+  .fext-sh{background:rgba(61,214,140,.12);color:var(--accent3)}
+  .fcmd{color:var(--accent);font-weight:700}
+  .folder-footer{margin-top:10px;padding-top:10px;border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center}
+  .file-count{font-size:10px;color:var(--text3);font-family:var(--mono)}
+  .file-viewer{background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);font-family:var(--mono);font-size:12px;line-height:1.7;padding:16px;color:var(--text2);max-height:260px;overflow-y:auto;white-space:pre-wrap}
+  .tab-content{display:none}.tab-content.active{display:block}
+  .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:200;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .2s}
+  .modal-overlay.open{opacity:1;pointer-events:all}
+  .modal{background:var(--bg2);border:1px solid var(--border2);border-radius:14px;width:480px;max-width:95vw;max-height:82vh;overflow-y:auto}
+  .modal-header{padding:20px 22px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+  .modal-title{font-size:16px;font-weight:800}
+  .modal-close{background:none;border:none;color:var(--text3);font-size:20px;cursor:pointer}
+  .modal-close:hover{color:var(--text)}
+  .modal-body{padding:20px 22px}.modal-footer{padding:14px 22px 18px;display:flex;gap:8px;justify-content:flex-end}
+  .form-group{margin-bottom:16px}
+  .form-label{font-size:11px;font-family:var(--mono);color:var(--text2);margin-bottom:6px;display:block}
+  .form-input{width:100%;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius2);padding:9px 12px;color:var(--text);font-size:13px;font-family:var(--sans);outline:none;transition:border-color .15s}
+  .form-input:focus{border-color:var(--accent)}
+  textarea.form-input{resize:vertical;min-height:80px}
+  ::-webkit-scrollbar{width:5px;height:5px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px}
+</style>
+</head>
+<body>
+
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-mark">
+      <div class="logo-icon">🦞</div>
+      <div><div class="logo-text">OpenClaw</div><div class="logo-sub">dashboard.fbrapps.com</div></div>
+    </div>
+  </div>
+  <nav class="nav">
+    <div class="nav-section">Principal</div>
+    <div class="nav-item"><span class="nav-icon">⬡</span> Overview</div>
+    <div class="nav-item active"><span class="nav-icon">🤖</span> Agentes</div>
+    <div class="nav-item"><span class="nav-icon">✓</span> Tarefas</div>
+    <div class="nav-item"><span class="nav-icon">⬢</span> Projetos</div>
+    <div class="nav-section">Sistema</div>
+    <div class="nav-item"><span class="nav-icon">📊</span> Logs</div>
+    <div class="nav-item"><span class="nav-icon">💾</span> Backups</div>
+    <div class="nav-item"><span class="nav-icon">⚙️</span> Config</div>
+  </nav>
+  <div class="sidebar-footer">
+    <div class="system-status">
+      <div class="status-row"><span>VPS 76.13.x.x</span><span><span class="dot dot-green"></span></span></div>
+      <div class="status-row"><span>PostgreSQL</span><span><span class="dot dot-green"></span></span></div>
+      <div class="status-row"><span>Telegram</span><span><span class="dot dot-green"></span></span></div>
+      <div class="status-row"><span>Firecrawl</span><span><span class="dot dot-blue"></span></span></div>
+    </div>
+  </div>
+</aside>
+
+<main class="main">
+  <header class="topbar">
+    <div>
+      <div class="topbar-title">Agentes & Recursos</div>
+      <div class="topbar-sub">4 agentes online · última sync 2min atrás</div>
+    </div>
+    <div class="topbar-actions">
+      <button class="btn btn-ghost" onclick="openModal('new-team-modal')">+ Novo Time</button>
+      <button class="btn btn-primary" onclick="openModal('new-agent-modal')">+ Novo Agente</button>
+    </div>
+  </header>
+
+  <div class="tabs">
+    <div class="tab active" onclick="switchTab('agents-tab',this)">🤖 Agentes</div>
+    <div class="tab" onclick="switchTab('workspace-tab',this)">📁 Workspace</div>
+    <div class="tab" onclick="switchTab('teams-tab',this)">👥 Times</div>
+  </div>
+
+  <div class="content">
+
+    <!-- AGENTES -->
+    <div id="agents-tab" class="tab-content active">
+      <div class="stats-row">
+        <div class="stat-card"><div class="stat-value" style="color:var(--accent3)">4</div><div class="stat-label">Agentes Ativos</div><div class="stat-sub">100% online</div></div>
+        <div class="stat-card"><div class="stat-value" style="color:var(--accent)">3</div><div class="stat-label">Times</div><div class="stat-sub">Core · Dev · Marketing</div></div>
+        <div class="stat-card"><div class="stat-value" style="color:var(--warn)">7</div><div class="stat-label">Tarefas em Curso</div><div class="stat-sub">2 bloqueadas</div></div>
+        <div class="stat-card">
+          <div class="stat-value" style="color:var(--text)">5min</div>
+          <div class="stat-label">Próximo Heartbeat</div>
+          <div class="heartbeat-bar">
+            <div class="hb-tick active" style="height:10px"></div><div class="hb-tick active" style="height:14px"></div>
+            <div class="hb-tick active" style="height:8px"></div><div class="hb-tick active" style="height:12px"></div>
+            <div class="hb-tick" style="height:10px"></div><div class="hb-tick" style="height:7px"></div><div class="hb-tick" style="height:13px"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="teams-row">
+        <div class="team-pill active" style="color:#8892b0;border-color:rgba(136,146,176,.3)" onclick="filterTeam('all',this)">Todos <span class="team-members-count">4</span></div>
+        <div class="team-pill" style="color:#4f8ef7;border-color:rgba(79,142,247,.3)" onclick="filterTeam('core',this)">⬡ Core <span class="team-members-count">2</span></div>
+        <div class="team-pill" style="color:#7b5ef8;border-color:rgba(123,94,248,.3)" onclick="filterTeam('backend',this)">⬢ Backend Dev <span class="team-members-count">2</span></div>
+        <div class="team-pill" style="color:#3dd68c;border-color:rgba(61,214,140,.3)" onclick="filterTeam('frontend',this)">◈ Frontend <span class="team-members-count">2</span></div>
+        <div class="team-pill" style="color:#f7a94f;border-color:rgba(247,169,79,.3)" onclick="filterTeam('marketing',this)">✦ Marketing <span class="team-members-count">1</span></div>
+      </div>
+
+      <div class="agents-grid" id="agents-grid">
+
+        <div class="agent-card" data-teams="core backend frontend marketing">
+          <div class="agent-card-accent" style="background:linear-gradient(90deg,#4f8ef7,#7b5ef8)"></div>
+          <div class="agent-card-body">
+            <div class="agent-card-head">
+              <div class="agent-avatar" style="background:linear-gradient(135deg,rgba(79,142,247,.2),rgba(123,94,248,.2))">🧠</div>
+              <div class="agent-info"><div class="agent-name">Chiara Garcia</div><div class="agent-role">orchestrator · main</div></div>
+              <div class="agent-status-badge status-online"><span class="dot dot-green"></span> Online</div>
+            </div>
+            <div class="agent-teams">
+              <span class="team-badge tc-core"><span class="tbdot"></span>Core</span>
+              <span class="team-badge tc-backend"><span class="tbdot"></span>Backend</span>
+              <span class="team-badge tc-frontend"><span class="tbdot"></span>Frontend</span>
+              <span class="team-badge tc-marketing"><span class="tbdot"></span>Marketing</span>
+            </div>
+            <div class="agent-commands">
+              <span class="cmd-chip">/email</span><span class="cmd-chip">/notify</span><span class="cmd-chip">/agenda</span><span class="cmd-chip">/report</span><span class="cmd-chip">/github</span>
+            </div>
+            <div class="agent-desc">Orquestradora principal. Distribui tarefas, monitora heartbeats e coordena todos os agentes. Protocolo anti-alucinação ativo.</div>
+            <div class="agent-meta">
+              <div class="meta-row"><span class="meta-label">Modelo</span><span class="meta-value">Gemini 2.5 Flash</span></div>
+              <div class="meta-row"><span class="meta-label">Heartbeat</span><span class="meta-value" style="color:var(--accent3)">há 2min</span></div>
+              <div class="meta-row"><span class="meta-label">Tarefas</span><span class="meta-value">3 ativas</span></div>
+              <div class="meta-row"><span class="meta-label">Uptime</span><span class="meta-value">99.8%</span></div>
+            </div>
+          </div>
+          <div class="agent-card-footer">
+            <button class="btn-sm">💬 Chat</button><button class="btn-sm">📋 Tarefas</button><button class="btn-sm">📊 Logs</button>
+            <button class="btn-sm" onclick="openModal('edit-agent-modal')">✎ Editar</button>
+          </div>
+        </div>
+
+        <div class="agent-card" data-teams="core backend">
+          <div class="agent-card-accent" style="background:linear-gradient(90deg,#7b5ef8,#4f8ef7)"></div>
+          <div class="agent-card-body">
+            <div class="agent-card-head">
+              <div class="agent-avatar" style="background:linear-gradient(135deg,rgba(123,94,248,.2),rgba(79,142,247,.2))">⚙️</div>
+              <div class="agent-info"><div class="agent-name">David Novaes</div><div class="agent-role">senior programmer</div></div>
+              <div class="agent-status-badge status-busy"><span class="dot dot-warn"></span> Ocupado</div>
+            </div>
+            <div class="agent-teams">
+              <span class="team-badge tc-core"><span class="tbdot"></span>Core</span>
+              <span class="team-badge tc-backend"><span class="tbdot"></span>Backend</span>
+            </div>
+            <div class="agent-commands">
+              <span class="cmd-chip">/github</span><span class="cmd-chip">/report</span><span class="cmd-chip">/notify</span>
+            </div>
+            <div class="agent-desc">Programador sênior. Responsável pela arquitetura backend, GitHub (100+ repos), PostgreSQL e integrações de API. Verificação obrigatória em todo push.</div>
+            <div class="agent-meta">
+              <div class="meta-row"><span class="meta-label">Modelo</span><span class="meta-value">Gemini 2.5 Flash</span></div>
+              <div class="meta-row"><span class="meta-label">Heartbeat</span><span class="meta-value" style="color:var(--accent3)">há 4min</span></div>
+              <div class="meta-row"><span class="meta-label">Tarefas</span><span class="meta-value">2 ativas</span></div>
+              <div class="meta-row"><span class="meta-label">Repos</span><span class="meta-value">100+ monitorados</span></div>
+            </div>
+          </div>
+          <div class="agent-card-footer">
+            <button class="btn-sm">💬 Chat</button><button class="btn-sm">📋 Tarefas</button><button class="btn-sm">📊 Logs</button>
+            <button class="btn-sm" onclick="openModal('edit-agent-modal')">✎ Editar</button>
+          </div>
+        </div>
+
+        <div class="agent-card" data-teams="frontend backend">
+          <div class="agent-card-accent" style="background:linear-gradient(90deg,#3dd68c,#4f8ef7)"></div>
+          <div class="agent-card-body">
+            <div class="agent-card-head">
+              <div class="agent-avatar" style="background:linear-gradient(135deg,rgba(61,214,140,.2),rgba(79,142,247,.2))">🎨</div>
+              <div class="agent-info"><div class="agent-name">Lia Salazar</div><div class="agent-role">frontend specialist</div></div>
+              <div class="agent-status-badge status-online"><span class="dot dot-green"></span> Online</div>
+            </div>
+            <div class="agent-teams">
+              <span class="team-badge tc-frontend"><span class="tbdot"></span>Frontend</span>
+              <span class="team-badge tc-backend"><span class="tbdot"></span>Backend</span>
+            </div>
+            <div class="agent-commands">
+              <span class="cmd-chip">/notify</span><span class="cmd-chip">/report</span><span class="cmd-chip">/github</span>
+            </div>
+            <div class="agent-desc">Especialista em frontend. React, UI/UX, componentes visuais e integração com APIs. Colabora com David no fullstack quando necessário.</div>
+            <div class="agent-meta">
+              <div class="meta-row"><span class="meta-label">Modelo</span><span class="meta-value">Kimi K2.5</span></div>
+              <div class="meta-row"><span class="meta-label">Heartbeat</span><span class="meta-value" style="color:var(--accent3)">há 1min</span></div>
+              <div class="meta-row"><span class="meta-label">Tarefas</span><span class="meta-value">1 ativa</span></div>
+              <div class="meta-row"><span class="meta-label">Stack</span><span class="meta-value">React · CSS · Node</span></div>
+            </div>
+          </div>
+          <div class="agent-card-footer">
+            <button class="btn-sm">💬 Chat</button><button class="btn-sm">📋 Tarefas</button><button class="btn-sm">📊 Logs</button>
+            <button class="btn-sm" onclick="openModal('edit-agent-modal')">✎ Editar</button>
+          </div>
+        </div>
+
+        <div class="agent-card" data-teams="marketing">
+          <div class="agent-card-accent" style="background:linear-gradient(90deg,#f7a94f,#f75454)"></div>
+          <div class="agent-card-body">
+            <div class="agent-card-head">
+              <div class="agent-avatar" style="background:linear-gradient(135deg,rgba(247,169,79,.2),rgba(247,84,84,.2))">📣</div>
+              <div class="agent-info"><div class="agent-name">Mila Castro</div><div class="agent-role">marketing manager</div></div>
+              <div class="agent-status-badge status-idle"><span class="dot dot-blue"></span> Idle</div>
+            </div>
+            <div class="agent-teams">
+              <span class="team-badge tc-marketing"><span class="tbdot"></span>Marketing</span>
+            </div>
+            <div class="agent-commands">
+              <span class="cmd-chip">/email</span><span class="cmd-chip">/inbox</span><span class="cmd-chip">/notify</span><span class="cmd-chip">/report</span>
+            </div>
+            <div class="agent-desc">Gerente de marketing. Copy, campanhas, análise de métricas e estratégia de conteúdo para as propriedades FaceBrasil.</div>
+            <div class="agent-meta">
+              <div class="meta-row"><span class="meta-label">Modelo</span><span class="meta-value">Gemini 2.5 Flash</span></div>
+              <div class="meta-row"><span class="meta-label">Heartbeat</span><span class="meta-value" style="color:var(--accent3)">há 3min</span></div>
+              <div class="meta-row"><span class="meta-label">Tarefas</span><span class="meta-value">1 ativa</span></div>
+              <div class="meta-row"><span class="meta-label">Canais</span><span class="meta-value">FB · IG · Email</span></div>
+            </div>
+          </div>
+          <div class="agent-card-footer">
+            <button class="btn-sm">💬 Chat</button><button class="btn-sm">📋 Tarefas</button><button class="btn-sm">📊 Logs</button>
+            <button class="btn-sm" onclick="openModal('edit-agent-modal')">✎ Editar</button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- WORKSPACE -->
+    <div id="workspace-tab" class="tab-content">
+      <div class="section-header">
+        <div><div class="section-title">📁 Workspace Compartilhada</div><div class="section-count">Recursos acessíveis por todos os agentes · /workspace</div></div>
+        <div style="display:flex;gap:8px"><button class="btn btn-ghost">+ Novo Arquivo</button><button class="btn btn-ghost">↓ Sync GitHub</button></div>
+      </div>
+      <div class="workspace-grid">
+        <div class="wfolder">
+          <div class="folder-head"><span class="folder-icon">⌘</span><div><div class="folder-name">Commands</div></div></div>
+          <div class="folder-desc">Comandos pré-formatados com prefixo <span style="color:var(--accent);font-family:var(--mono)">/</span>. Guias passo-a-passo para os agentes.</div>
+          <div class="folder-files">
+            <div class="file-item"><span class="fext">md</span><span class="fcmd">/email</span>.md</div>
+            <div class="file-item"><span class="fext">md</span><span class="fcmd">/inbox</span>.md</div>
+            <div class="file-item"><span class="fext">md</span><span class="fcmd">/agenda</span>.md</div>
+            <div class="file-item"><span class="fext">md</span><span class="fcmd">/notify</span>.md</div>
+            <div class="file-item"><span class="fext">md</span><span class="fcmd">/github</span>.md</div>
+            <div class="file-item"><span class="fext">md</span><span class="fcmd">/report</span>.md</div>
+          </div>
+          <div class="folder-footer"><span class="file-count">6 arquivos</span><button class="btn-sm" style="font-size:10px">Ver todos →</button></div>
+        </div>
+        <div class="wfolder">
+          <div class="folder-head"><span class="folder-icon">⚡</span><div><div class="folder-name">Skills</div></div></div>
+          <div class="folder-desc">Habilidades específicas com cabeçalho padronizado. Agentes consultam para ampliar capacidades.</div>
+          <div class="folder-files">
+            <div class="file-item"><span class="fext">md</span> web-scraping.md</div>
+            <div class="file-item"><span class="fext">md</span> code-review.md</div>
+            <div class="file-item"><span class="fext">md</span> copywriting.md</div>
+            <div class="file-item"><span class="fext">md</span> postgresql-ops.md</div>
+          </div>
+          <div class="folder-footer"><span class="file-count">4 arquivos</span><button class="btn-sm" style="font-size:10px">Ver todos →</button></div>
+        </div>
+        <div class="wfolder">
+          <div class="folder-head"><span class="folder-icon">🔗</span><div><div class="folder-name">Hooks</div></div></div>
+          <div class="folder-desc">Encadeamento de ações reativas. "Quando X acontecer → faça Y."</div>
+          <div class="folder-files">
+            <div class="file-item"><span class="fext">md</span> email-to-task.md</div>
+            <div class="file-item"><span class="fext">md</span> daily-briefing.md</div>
+            <div class="file-item"><span class="fext">md</span> agent-failure-recovery.md</div>
+          </div>
+          <div class="folder-footer"><span class="file-count">3 arquivos</span><button class="btn-sm" style="font-size:10px">Ver todos →</button></div>
+        </div>
+        <div class="wfolder">
+          <div class="folder-head"><span class="folder-icon">📜</span><div><div class="folder-name">Scripts</div></div></div>
+          <div class="folder-desc">Repositório central de todos os scripts referenciados pelos agentes.</div>
+          <div class="folder-files">
+            <div class="file-item"><span class="fext fext-sh">sh</span> send-email.sh</div>
+            <div class="file-item"><span class="fext fext-sh">sh</span> send-telegram.sh</div>
+            <div class="file-item"><span class="fext fext-sh">sh</span> heartbeat.sh</div>
+          </div>
+          <div class="folder-footer"><span class="file-count">3 arquivos</span><button class="btn-sm" style="font-size:10px">Ver todos →</button></div>
+        </div>
+        <div class="wfolder">
+          <div class="folder-head"><span class="folder-icon">🔌</span><div><div class="folder-name">Connectors</div></div></div>
+          <div class="folder-desc">Configuração de conexões a APIs externas. Credenciais sempre via variáveis de ambiente.</div>
+          <div class="folder-files">
+            <div class="file-item"><span class="fext">md</span> gmail-connector.md</div>
+            <div class="file-item"><span class="fext">md</span> github-connector.md</div>
+            <div class="file-item"><span class="fext">md</span> telegram-connector.md</div>
+            <div class="file-item"><span class="fext">md</span> openrouter-connector.md</div>
+          </div>
+          <div class="folder-footer"><span class="file-count">4 arquivos</span><button class="btn-sm" style="font-size:10px">Ver todos →</button></div>
+        </div>
+        <div class="wfolder">
+          <div class="folder-head"><span class="folder-icon">🔧</span><div><div class="folder-name">MCP</div></div></div>
+          <div class="folder-desc">Model Context Protocol — servidores MCP disponíveis para os agentes.</div>
+          <div class="folder-files">
+            <div class="file-item"><span class="fext">md</span> filesystem-mcp.md</div>
+            <div class="file-item"><span class="fext">md</span> postgresql-mcp.md</div>
+            <div class="file-item"><span class="fext">md</span> github-mcp.md</div>
+          </div>
+          <div class="folder-footer"><span class="file-count">3 arquivos</span><button class="btn-sm" style="font-size:10px">Ver todos →</button></div>
+        </div>
+      </div>
+      <div style="margin-top:20px">
+        <div class="wfolder" style="cursor:default">
+          <div class="folder-head"><span class="folder-icon">📖</span><div><div class="folder-name">README.md</div></div></div>
+          <div class="file-viewer">
+# 📁 Workspace Compartilhada dos Agentes
+
+├── /Commands    → /email /inbox /agenda /notify /github /report
+├── /Skills      → Habilidades com cabeçalho padrão
+├── /Hooks       → Encadeamentos reativos (quando X → faça Y)
+├── /Scripts     → Todos os scripts referenciados pelos agentes
+├── /Connectors  → Conexões a APIs externas
+└── /MCP         → Model Context Protocol servers disponíveis
+
+CONVENÇÃO:  prefixo / · nome curto · sem hífen quando possível
+
+PERMISSÕES:
+  Chiara → leitura + escrita total
+  David  → leitura + escrita em /Scripts
+  Lia    → leitura + escrita em /Scripts
+  Mila   → somente leitura</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TIMES -->
+    <div id="teams-tab" class="tab-content">
+      <div class="section-header">
+        <div><div class="section-title">👥 Gestão de Times</div><div class="section-count">Membros podem pertencer a múltiplos times</div></div>
+        <button class="btn btn-primary" onclick="openModal('new-team-modal')">+ Criar Time</button>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:16px">
+        <div class="wfolder" style="cursor:default;border-top:3px solid #4f8ef7">
+          <div class="folder-head"><span style="font-size:20px">⬡</span><div><div class="folder-name" style="color:#4f8ef7">Core</div><div style="font-size:11px;color:var(--text2);font-family:var(--mono)">Equipe central de coordenação</div></div></div>
+          <div class="folder-desc">Orquestração geral, backups, monitoramento de infraestrutura e protocolos de recuperação.</div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">
+            <span style="display:flex;align-items:center;gap:6px;padding:5px 10px;background:var(--bg3);border-radius:6px;font-size:12px">🧠 Chiara Garcia</span>
+            <span style="display:flex;align-items:center;gap:6px;padding:5px 10px;background:var(--bg3);border-radius:6px;font-size:12px">⚙️ David Novaes</span>
+          </div>
+        </div>
+        <div class="wfolder" style="cursor:default;border-top:3px solid #7b5ef8">
+          <div class="folder-head"><span style="font-size:20px">⬢</span><div><div class="folder-name" style="color:#7b5ef8">Backend Dev</div><div style="font-size:11px;color:var(--text2);font-family:var(--mono)">Desenvolvimento backend e fullstack</div></div></div>
+          <div class="folder-desc">Gestão dos 100+ repositórios, APIs, banco PostgreSQL e infraestrutura de servidor.</div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">
+            <span style="display:flex;align-items:center;gap:6px;padding:5px 10px;background:var(--bg3);border-radius:6px;font-size:12px">⚙️ David Novaes</span>
+            <span style="display:flex;align-items:center;gap:6px;padding:5px 10px;background:var(--bg3);border-radius:6px;font-size:12px">🎨 Lia Salazar</span>
+          </div>
+        </div>
+        <div class="wfolder" style="cursor:default;border-top:3px solid #3dd68c">
+          <div class="folder-head"><span style="font-size:20px">◈</span><div><div class="folder-name" style="color:#3dd68c">Frontend</div><div style="font-size:11px;color:var(--text2);font-family:var(--mono)">Interface, UX e componentes visuais</div></div></div>
+          <div class="folder-desc">Desenvolvimento de interfaces, componentes React, dashboards e experiência do usuário.</div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">
+            <span style="display:flex;align-items:center;gap:6px;padding:5px 10px;background:var(--bg3);border-radius:6px;font-size:12px">🎨 Lia Salazar</span>
+            <span style="display:flex;align-items:center;gap:6px;padding:5px 10px;background:var(--bg3);border-radius:6px;font-size:12px">🧠 Chiara Garcia</span>
+          </div>
+        </div>
+        <div class="wfolder" style="cursor:default;border-top:3px solid #f7a94f">
+          <div class="folder-head"><span style="font-size:20px">✦</span><div><div class="folder-name" style="color:#f7a94f">Marketing</div><div style="font-size:11px;color:var(--text2);font-family:var(--mono)">Conteúdo, campanhas e crescimento</div></div></div>
+          <div class="folder-desc">Copy, campanhas pagas, análise de métricas e estratégia de conteúdo para todas as propriedades digitais.</div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">
+            <span style="display:flex;align-items:center;gap:6px;padding:5px 10px;background:var(--bg3);border-radius:6px;font-size:12px">📣 Mila Castro</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<!-- MODALS -->
+<div class="modal-overlay" id="new-agent-modal">
+  <div class="modal">
+    <div class="modal-header"><div class="modal-title">🤖 Novo Agente</div><button class="modal-close" onclick="closeModal('new-agent-modal')">×</button></div>
+    <div class="modal-body">
+      <div class="form-group"><label class="form-label">NOME</label><input type="text" class="form-input" placeholder="Ex: João Silva"></div>
+      <div class="form-group"><label class="form-label">FUNÇÃO</label><input type="text" class="form-input" placeholder="Ex: data analyst"></div>
+      <div class="form-group"><label class="form-label">DESCRIÇÃO</label><textarea class="form-input" placeholder="Responsabilidades..."></textarea></div>
+      <div class="form-group">
+        <label class="form-label">TIMES</label>
+        <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:4px">
+          <label style="display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer"><input type="checkbox" style="accent-color:#4f8ef7"> <span style="color:#4f8ef7">⬡ Core</span></label>
+          <label style="display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer"><input type="checkbox" style="accent-color:#7b5ef8"> <span style="color:#7b5ef8">⬢ Backend</span></label>
+          <label style="display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer"><input type="checkbox" style="accent-color:#3dd68c"> <span style="color:#3dd68c">◈ Frontend</span></label>
+          <label style="display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer"><input type="checkbox" style="accent-color:#f7a94f"> <span style="color:#f7a94f">✦ Marketing</span></label>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">COMANDOS</label>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:4px">
+          <label style="display:flex;align-items:center;gap:4px;font-size:11px;cursor:pointer;font-family:var(--mono)"><input type="checkbox" style="accent-color:var(--accent)"> /email</label>
+          <label style="display:flex;align-items:center;gap:4px;font-size:11px;cursor:pointer;font-family:var(--mono)"><input type="checkbox" style="accent-color:var(--accent)"> /inbox</label>
+          <label style="display:flex;align-items:center;gap:4px;font-size:11px;cursor:pointer;font-family:var(--mono)"><input type="checkbox" style="accent-color:var(--accent)"> /agenda</label>
+          <label style="display:flex;align-items:center;gap:4px;font-size:11px;cursor:pointer;font-family:var(--mono)"><input type="checkbox" style="accent-color:var(--accent)"> /notify</label>
+          <label style="display:flex;align-items:center;gap:4px;font-size:11px;cursor:pointer;font-family:var(--mono)"><input type="checkbox" style="accent-color:var(--accent)"> /github</label>
+          <label style="display:flex;align-items:center;gap:4px;font-size:11px;cursor:pointer;font-family:var(--mono)"><input type="checkbox" style="accent-color:var(--accent)"> /report</label>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">MODELO LLM</label>
+        <select class="form-input" style="appearance:auto">
+          <option>google/gemini-2.5-flash-lite</option><option>moonshotai/kimi-k2.5</option><option>anthropic/claude-sonnet</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('new-agent-modal')">Cancelar</button><button class="btn btn-primary">Criar Agente</button></div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="new-team-modal">
+  <div class="modal">
+    <div class="modal-header"><div class="modal-title">👥 Novo Time</div><button class="modal-close" onclick="closeModal('new-team-modal')">×</button></div>
+    <div class="modal-body">
+      <div class="form-group"><label class="form-label">NOME</label><input type="text" class="form-input" placeholder="Ex: Data Science"></div>
+      <div class="form-group"><label class="form-label">OBJETIVO</label><textarea class="form-input" placeholder="Objetivo e responsabilidade..."></textarea></div>
+      <div class="form-group">
+        <label class="form-label">COR</label>
+        <div style="display:flex;gap:8px;margin-top:4px">
+          <input type="color" value="#4f8ef7" style="width:32px;height:32px;border:1px solid var(--border);border-radius:6px;cursor:pointer;background:none">
+          <input type="text" class="form-input" value="#4f8ef7" style="flex:1;font-family:var(--mono)">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">MEMBROS</label>
+        <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:4px">
+          <label style="display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer"><input type="checkbox"> 🧠 Chiara</label>
+          <label style="display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer"><input type="checkbox"> ⚙️ David</label>
+          <label style="display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer"><input type="checkbox"> 🎨 Lia</label>
+          <label style="display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer"><input type="checkbox"> 📣 Mila</label>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('new-team-modal')">Cancelar</button><button class="btn btn-primary">Criar Time</button></div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="edit-agent-modal">
+  <div class="modal">
+    <div class="modal-header"><div class="modal-title">✎ Editar Agente</div><button class="modal-close" onclick="closeModal('edit-agent-modal')">×</button></div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">TIMES</label>
+        <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:4px">
+          <label style="display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer"><input type="checkbox" checked style="accent-color:#4f8ef7"> <span style="color:#4f8ef7">⬡ Core</span></label>
+          <label style="display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer"><input type="checkbox" style="accent-color:#7b5ef8"> <span style="color:#7b5ef8">⬢ Backend</span></label>
+          <label style="display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer"><input type="checkbox" style="accent-color:#3dd68c"> <span style="color:#3dd68c">◈ Frontend</span></label>
+          <label style="display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer"><input type="checkbox" style="accent-color:#f7a94f"> <span style="color:#f7a94f">✦ Marketing</span></label>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">COMANDOS</label>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:4px">
+          <label style="display:flex;align-items:center;gap:4px;font-size:11px;cursor:pointer;font-family:var(--mono)"><input type="checkbox" checked style="accent-color:var(--accent)"> /email</label>
+          <label style="display:flex;align-items:center;gap:4px;font-size:11px;cursor:pointer;font-family:var(--mono)"><input type="checkbox" style="accent-color:var(--accent)"> /inbox</label>
+          <label style="display:flex;align-items:center;gap:4px;font-size:11px;cursor:pointer;font-family:var(--mono)"><input type="checkbox" checked style="accent-color:var(--accent)"> /agenda</label>
+          <label style="display:flex;align-items:center;gap:4px;font-size:11px;cursor:pointer;font-family:var(--mono)"><input type="checkbox" checked style="accent-color:var(--accent)"> /notify</label>
+          <label style="display:flex;align-items:center;gap:4px;font-size:11px;cursor:pointer;font-family:var(--mono)"><input type="checkbox" checked style="accent-color:var(--accent)"> /github</label>
+          <label style="display:flex;align-items:center;gap:4px;font-size:11px;cursor:pointer;font-family:var(--mono)"><input type="checkbox" checked style="accent-color:var(--accent)"> /report</label>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">MODELO LLM</label>
+        <select class="form-input" style="appearance:auto"><option>google/gemini-2.5-flash-lite</option><option>moonshotai/kimi-k2.5</option></select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">STATUS</label>
+        <select class="form-input" style="appearance:auto"><option>online</option><option>busy</option><option>idle</option><option>offline</option></select>
+      </div>
+    </div>
+    <div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('edit-agent-modal')">Cancelar</button><button class="btn btn-primary">Salvar</button></div>
+  </div>
+</div>
+
+<script>
+  function switchTab(id,el){document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));document.getElementById(id).classList.add('active');el.classList.add('active')}
+  function openModal(id){document.getElementById(id).classList.add('open')}
+  function closeModal(id){document.getElementById(id).classList.remove('open')}
+  document.querySelectorAll('.modal-overlay').forEach(o=>o.addEventListener('click',e=>{if(e.target===o)o.classList.remove('open')}));
+  function filterTeam(team,el){document.querySelectorAll('.team-pill').forEach(p=>p.classList.remove('active'));el.classList.add('active');document.querySelectorAll('.agent-card').forEach(card=>{card.style.display=(team==='all'||(card.dataset.teams||'').includes(team))?'':'none'})}
+  setInterval(()=>{const t=document.querySelectorAll('.hb-tick');t.forEach(x=>x.classList.remove('active'));const n=Math.floor(Math.random()*t.length)+2;for(let i=0;i<n&&i<t.length;i++)t[i].classList.add('active')},1500);
+</script>
+</body>
+</html>

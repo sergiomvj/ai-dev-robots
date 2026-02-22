@@ -1,0 +1,107 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  name         String   @default("Admin")
+  role         String   @default("admin")
+  createdAt    DateTime @default(now())
+}
+
+model Agent {
+  id          String      @id @default(cuid())
+  name        String      @unique
+  role        String
+  description String?
+  avatar      String      @default("🤖")
+  model       String      @default("google/gemini-2.5-flash-lite")
+  status      String      @default("offline")
+  teams       String[]
+  commands    String[]
+  lastSeen    DateTime?
+  uptime      Float       @default(0)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  tasks       Task[]
+  logs        Log[]
+  heartbeats  Heartbeat[]
+}
+
+model Team {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  slug        String   @unique
+  description String?
+  color       String   @default("#4f8ef7")
+  icon        String   @default("⬡")
+  createdAt   DateTime @default(now())
+}
+
+model Task {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  status      String   @default("open")
+  priority    String   @default("medium")
+  agentId     String?
+  agent       Agent?   @relation(fields: [agentId], references: [id])
+  projectId   String?
+  project     Project? @relation(fields: [projectId], references: [id])
+  dueAt       DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Project {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  status      String   @default("active")
+  progress    Int      @default(0)
+  color       String   @default("#4f8ef7")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  tasks       Task[]
+}
+
+model Log {
+  id        String   @id @default(cuid())
+  level     String   @default("INFO")
+  message   String
+  agentId   String?
+  agent     Agent?   @relation(fields: [agentId], references: [id])
+  meta      Json?
+  createdAt DateTime @default(now())
+}
+
+model Heartbeat {
+  id        String   @id @default(cuid())
+  agentId   String
+  agent     Agent    @relation(fields: [agentId], references: [id])
+  status    String   @default("ok")
+  createdAt DateTime @default(now())
+}
+
+model Backup {
+  id        String   @id @default(cuid())
+  name      String
+  path      String
+  sizeBytes Int      @default(0)
+  type      String   @default("auto")
+  createdAt DateTime @default(now())
+}
+
+model Config {
+  id    String @id @default(cuid())
+  key   String @unique
+  value String
+}
