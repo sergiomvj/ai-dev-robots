@@ -47,19 +47,23 @@ export default function AgentsPage() {
     const hbTimerRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
     async function load() {
-        const [ag, tm, ws, md] = await Promise.all([
+        // Carrega dados vitais primeiro
+        const [ag, tm, md] = await Promise.all([
             fetch('/api/agents').then(r => r.json()),
             fetch('/api/teams').then(r => r.json()),
-            fetch('/api/workspace').then(r => r.json()),
             fetch('/api/config/llms').then(r => r.json()),
         ])
         if (Array.isArray(ag)) setAgents(ag)
         if (Array.isArray(tm)) setTeams(tm)
-        if (ws && typeof ws === 'object' && !Array.isArray(ws)) setWorkspace(ws)
         if (Array.isArray(md)) {
             setAvailableModels(md)
             if (md.length > 0) setNewAgent(a => ({ ...a, model: md[0] }))
         }
+
+        // Carrega workspace em background ou quando a aba for ativada
+        fetch('/api/workspace').then(r => r.json()).then(ws => {
+            if (ws && typeof ws === 'object' && !Array.isArray(ws)) setWorkspace(ws)
+        })
     }
     useEffect(() => {
         load()
@@ -179,7 +183,7 @@ export default function AgentsPage() {
                                             </div>
                                         </div>
                                         <div style={{ padding: '12px 18px', borderTop: '1px solid var(--border)', display: 'flex', gap: 8, background: 'rgba(0,0,0,.15)' }}>
-                                            <button className="btn-sm" title="Abrir chat do agente">💬 Chat</button>
+                                            <button className="btn-sm" title="Abrir chat do agente" onClick={() => router.push(`/dashboard/chat?agentId=${agent.id}`)}>💬 Chat</button>
                                             <button className="btn-sm" onClick={() => router.push(`/dashboard/tasks?agentId=${agent.id}`)}>📋 Tarefas</button>
                                             <button className="btn-sm" onClick={() => router.push(`/dashboard/logs?agentId=${agent.id}`)}>📊 Logs</button>
                                             <button className="btn-sm" onClick={() => setEditAgent(agent)}>✎ Editar</button>

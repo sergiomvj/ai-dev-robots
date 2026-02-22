@@ -1,5 +1,6 @@
 import { prisma } from '@/lib/db'
 import Topbar from '@/components/layout/Topbar'
+import Link from 'next/link'
 
 export default async function OverviewPage() {
     const [agents, tasks, projects, recentLogs] = await Promise.all([
@@ -66,41 +67,53 @@ export default async function OverviewPage() {
                     <div className="section-header">
                         <div>
                             <div className="section-title font-heading" style={{ fontSize: 18, fontWeight: 700 }}>📋 Atividade Recente</div>
-                            <div className="section-count">Últimas {recentLogs.length} entradas de log</div>
+                            <div className="section-count">{recentLogs.length > 0 ? `Últimas ${recentLogs.length} entradas de log` : 'Nenhum log detectado'}</div>
                         </div>
                     </div>
-                    <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 'var(--radius)', overflow: 'hidden' }}>
-                        {recentLogs.length === 0 ? (
-                            <div style={{ padding: '24px', textAlign: 'center', color: 'var(--text3)', fontFamily: 'var(--mono)', fontSize: 12 }}>
-                                Nenhum log registrado ainda
+
+                    {recentLogs.length === 0 ? (
+                        <div className="card" style={{ padding: '40px 24px', textAlign: 'center', background: 'var(--bg2)' }}>
+                            <div style={{ fontSize: 32, marginBottom: 16 }}>🔎</div>
+                            <div className="font-heading" style={{ fontSize: 18, fontWeight: 700, marginBottom: 8 }}>Nenhuma atividade encontrada</div>
+                            <div style={{ fontSize: 13, color: 'var(--text2)', maxWidth: 400, margin: '0 auto', lineHeight: 1.6 }}>
+                                O sistema está operacional, mas ainda não há registros de atividade.
+                                Certifique-se de que os agentes estão configurados e enviando logs via API.
                             </div>
-                        ) : recentLogs.map((log: any, i: number) => (
-                            <div key={log.id} style={{
-                                display: 'flex',
-                                alignItems: 'flex-start',
-                                gap: 12,
-                                padding: '10px 16px',
-                                borderBottom: i < recentLogs.length - 1 ? '1px solid var(--border)' : 'none',
-                                fontSize: 12,
-                            }}>
-                                <span style={{
-                                    fontFamily: 'var(--mono)',
-                                    fontSize: 10,
-                                    fontWeight: 700,
-                                    color: levelColors[log.level] || 'var(--text2)',
-                                    width: 32,
-                                    flexShrink: 0,
-                                    marginTop: 1,
+                            <div style={{ marginTop: 24, display: 'flex', gap: 12, justifyContent: 'center' }}>
+                                <Link href="/dashboard/agents" className="btn-sm" style={{ textDecoration: 'none' }}>Configurar Agentes</Link>
+                                <Link href="/dashboard/backups" className="btn-sm btn-ghost" style={{ textDecoration: 'none' }}>Verificar Backups</Link>
+                            </div>
+                        </div>
+                    ) : (
+                        <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 'var(--radius)', overflow: 'hidden' }}>
+                            {recentLogs.map((log: any, i: number) => (
+                                <div key={log.id} style={{
+                                    display: 'flex',
+                                    alignItems: 'flex-start',
+                                    gap: 12,
+                                    padding: '10px 16px',
+                                    borderBottom: i < recentLogs.length - 1 ? '1px solid var(--border)' : 'none',
+                                    fontSize: 12,
                                 }}>
-                                    {log.level}
-                                </span>
-                                <span style={{ flex: 1, color: 'var(--text2)' }}>{log.message}</span>
-                                <span style={{ color: 'var(--text3)', fontFamily: 'var(--mono)', fontSize: 10, flexShrink: 0 }}>
-                                    {log.agent?.name ?? 'sistema'} · {new Date(log.createdAt).toLocaleTimeString('pt-BR')}
-                                </span>
-                            </div>
-                        ))}
-                    </div>
+                                    <span style={{
+                                        fontFamily: 'var(--mono)',
+                                        fontSize: 10,
+                                        fontWeight: 700,
+                                        color: levelColors[log.level] || 'var(--text2)',
+                                        width: 32,
+                                        flexShrink: 0,
+                                        marginTop: 1,
+                                    }}>
+                                        {log.level}
+                                    </span>
+                                    <span style={{ flex: 1, color: 'var(--text2)' }}>{log.message}</span>
+                                    <span style={{ color: 'var(--text3)', fontFamily: 'var(--mono)', fontSize: 10, flexShrink: 0 }}>
+                                        {log.agent?.name ?? 'sistema'} · {new Date(log.createdAt).toLocaleTimeString('pt-BR')}
+                                    </span>
+                                </div>
+                            ))}
+                        </div>
+                    )}
                 </div>
             </div>
         </>

@@ -1,126 +1,119 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useSearchParams } from 'next/navigation'
 import Topbar from '@/components/layout/Topbar'
 
-interface Task { id: string; title: string; description?: string; status: string; priority: string; dueAt?: string; agent?: { id: string; name: string; avatar: string }; project?: { id: string; name: string } }
-interface Agent { id: string; name: string; avatar: string }
-interface Project { id: string; name: string }
+interface Task {
+    id: string
+    title: string
+    description?: string
+    status: string
+    priority: string
+    agentId: string
+    agent: { name: string; avatar: string }
+    createdAt: string
+}
 
-const PRIORITY_COLORS: Record<string, string> = { high: 'var(--danger)', medium: 'var(--warn)', low: 'var(--accent)' }
-const STATUS_LABELS: Record<string, string> = { open: 'Aberta', in_progress: 'Em andamento', blocked: 'Bloqueada', done: 'Concluída' }
+const STATUS_COLORS: Record<string, string> = {
+    open: 'var(--accent)',
+    in_progress: 'var(--warn)',
+    done: 'var(--accent3)',
+    blocked: 'var(--danger)',
+}
 
 export default function TasksPage() {
+    const searchParams = useSearchParams()
+    const agentIdParam = searchParams.get('agentId')
+
     const [tasks, setTasks] = useState<Task[]>([])
-    const [agents, setAgents] = useState<Agent[]>([])
-    const [projects, setProjects] = useState<Project[]>([])
-    const [filterAgent, setFilterAgent] = useState('')
-    const [filterPriority, setFilterPriority] = useState('')
-    const [showNew, setShowNew] = useState(false)
-    const [newTask, setNewTask] = useState({ title: '', description: '', priority: 'medium', agentId: '', projectId: '', dueAt: '' })
+    const [loading, setLoading] = useState(true)
+    const [filterStatus, setFilterStatus] = useState('all')
 
     async function load() {
-        const params = new URLSearchParams()
-        if (filterAgent) params.set('agentId', filterAgent)
-        if (filterPriority) params.set('priority', filterPriority)
-        const [ts, ag, pr] = await Promise.all([
-            fetch(`/api/tasks?${params}`).then(r => r.json()).catch(() => []),
-            fetch('/api/agents').then(r => r.json()).catch(() => []),
-            fetch('/api/projects').then(r => r.json()).catch(() => []),
-        ])
-        if (Array.isArray(ts)) setTasks(ts)
-        if (Array.isArray(ag)) setAgents(ag)
-        if (Array.isArray(pr)) setProjects(pr)
+        setLoading(true)
+        const res = await fetch('/api/tasks')
+        const data = await res.json()
+        if (Array.isArray(data)) setTasks(data)
+        setLoading(false)
     }
 
-    useEffect(() => { load() }, [filterAgent, filterPriority])
-
-    async function toggleStatus(task: Task) {
-        const next = task.status === 'done' ? 'open' : task.status === 'open' ? 'in_progress' : 'done'
-        await fetch(`/api/tasks/${task.id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status: next }) })
+    useEffect(() => {
         load()
-    }
-    async function deleteTask(id: string) {
-        await fetch(`/api/tasks/${id}`, { method: 'DELETE' }); load()
-    }
-    async function createTask() {
-        await fetch('/api/tasks', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...newTask, agentId: newTask.agentId || null, projectId: newTask.projectId || null, dueAt: newTask.dueAt || null }) })
-        setShowNew(false); load()
-    }
+    }, [])
+
+    const filtered = tasks.filter(t => {
+        const matchesAgent = agentIdParam ? t.agentId === agentIdParam : true
+        const matchesStatus = filterStatus === 'all' ? true : t.status === filterStatus
+        return matchesAgent && matchesStatus
+    })
 
     return (
         <>
             <Topbar
-                title="Tarefas"
-                subtitle={`${tasks.filter(t => t.status !== 'done').length} abertas · ${tasks.filter(t => t.status === 'done').length} concluídas`}
-                actions={<button className="btn btn-primary" onClick={() => setShowNew(true)}>+ Nova Tarefa</button>}
+                title="Gestão de Tarefas"
+                subtitle={agentIdParam ? `Filtrando tarefas do agente ${tasks.find(t => t.agentId === agentIdParam)?.agent.name || ''}` : 'Monitoramento de execuções e objetivos'}
             />
-            <div className="content">
-                {/* Filtros */}
-                <div style={{ display: 'flex', gap: 10, marginBottom: 20 }}>
-                    <select className="form-input" style={{ width: 180 }} value={filterAgent} onChange={e => setFilterAgent(e.target.value)}>
-                        <option value="">Todos os agentes</option>
-                        {agents.map(a => <option key={a.id} value={a.id}>{a.avatar} {a.name}</option>)}
-                    </select>
-                    <select className="form-input" style={{ width: 160 }} value={filterPriority} onChange={e => setFilterPriority(e.target.value)}>
-                        <option value="">Todas as prioridades</option>
-                        <option value="high">Alta</option>
-                        <option value="medium">Média</option>
-                        <option value="low">Baixa</option>
-                    </select>
-                </div>
 
-                {/* Task list */}
-                <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius)', overflow: 'hidden' }}>
-                    {tasks.length === 0 ? (
-                        <div style={{ padding: 24, textAlign: 'center', color: 'var(--text3)', fontFamily: 'var(--mono)', fontSize: 12 }}>Nenhuma tarefa encontrada</div>
-                    ) : tasks.map((task, i) => (
-                        <div key={task.id} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '12px 16px', borderBottom: i < tasks.length - 1 ? '1px solid var(--border)' : 'none' }}>
-                            <input type="checkbox" checked={task.status === 'done'} onChange={() => toggleStatus(task)} style={{ accentColor: 'var(--accent)', width: 16, height: 16, cursor: 'pointer', flexShrink: 0 }} />
-                            <div style={{ flex: 1 }}>
-                                <div style={{ fontSize: 13, fontWeight: 700, textDecoration: task.status === 'done' ? 'line-through' : 'none', color: task.status === 'done' ? 'var(--text3)' : 'var(--text)' }}>{task.title}</div>
-                                {task.description && <div style={{ fontSize: 11, color: 'var(--text2)', marginTop: 2 }}>{task.description}</div>}
-                            </div>
-                            {task.project && <span style={{ fontSize: 10, fontFamily: 'var(--mono)', color: 'var(--text3)', background: 'var(--bg3)', padding: '2px 7px', borderRadius: 4 }}>{task.project.name}</span>}
-                            {task.agent && <span style={{ fontSize: 11, fontFamily: 'var(--mono)', color: 'var(--text2)' }}>{task.agent.avatar} {task.agent.name}</span>}
-                            <span style={{ fontSize: 10, fontFamily: 'var(--mono)', fontWeight: 700, color: PRIORITY_COLORS[task.priority], width: 42, textAlign: 'center' }}>{task.priority.toUpperCase()}</span>
-                            <span style={{ fontSize: 10, fontFamily: 'var(--mono)', color: 'var(--text3)' }}>{STATUS_LABELS[task.status] || task.status}</span>
-                            <button className="btn-sm" onClick={() => deleteTask(task.id)} style={{ color: 'var(--danger)', borderColor: 'rgba(247,84,84,.3)', fontSize: 10 }}>✕</button>
-                        </div>
+            <div className="content">
+                <div style={{ display: 'flex', gap: 10, marginBottom: 20 }}>
+                    {['all', 'open', 'in_progress', 'done', 'blocked'].map(s => (
+                        <button
+                            key={s}
+                            onClick={() => setFilterStatus(s)}
+                            className={`btn-sm ${filterStatus === s ? 'btn-primary' : 'btn-ghost'}`}
+                            style={{ textTransform: 'uppercase', fontSize: 10, fontWeight: 700 }}
+                        >
+                            {s === 'all' ? 'Todas' : s.replace('_', ' ')}
+                        </button>
                     ))}
                 </div>
-            </div>
 
-            {/* Modal Nova Tarefa */}
-            <div className={`modal-overlay ${showNew ? 'open' : ''}`} onClick={() => setShowNew(false)}>
-                <div className="modal" onClick={e => e.stopPropagation()}>
-                    <div className="modal-header"><div className="modal-title">✓ Nova Tarefa</div><button className="modal-close" onClick={() => setShowNew(false)}>×</button></div>
-                    <div className="modal-body">
-                        <div className="form-group"><label className="form-label">TÍTULO</label><input type="text" className="form-input" placeholder="Descreva a tarefa..." value={newTask.title} onChange={e => setNewTask(t => ({ ...t, title: e.target.value }))} /></div>
-                        <div className="form-group"><label className="form-label">DESCRIÇÃO</label><textarea className="form-input" placeholder="Detalhes opcionais..." value={newTask.description} onChange={e => setNewTask(t => ({ ...t, description: e.target.value }))} /></div>
-                        <div className="form-group">
-                            <label className="form-label">PRIORIDADE</label>
-                            <select className="form-input" value={newTask.priority} onChange={e => setNewTask(t => ({ ...t, priority: e.target.value }))}>
-                                <option value="high">Alta</option><option value="medium">Média</option><option value="low">Baixa</option>
-                            </select>
-                        </div>
-                        <div className="form-group">
-                            <label className="form-label">AGENTE</label>
-                            <select className="form-input" value={newTask.agentId} onChange={e => setNewTask(t => ({ ...t, agentId: e.target.value }))}>
-                                <option value="">Sem agente</option>
-                                {agents.map(a => <option key={a.id} value={a.id}>{a.avatar} {a.name}</option>)}
-                            </select>
-                        </div>
-                        <div className="form-group">
-                            <label className="form-label">PROJETO</label>
-                            <select className="form-input" value={newTask.projectId} onChange={e => setNewTask(t => ({ ...t, projectId: e.target.value }))}>
-                                <option value="">Sem projeto</option>
-                                {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-                            </select>
-                        </div>
+                {loading ? (
+                    <div className="card" style={{ padding: 40, textAlign: 'center', color: 'var(--text2)' }}>Carregando tarefas...</div>
+                ) : filtered.length === 0 ? (
+                    <div className="card" style={{ padding: 40, textAlign: 'center', color: 'var(--text2)' }}>Nenhuma tarefa encontrada.</div>
+                ) : (
+                    <div style={{ display: 'grid', gap: 12 }}>
+                        {filtered.map(task => (
+                            <div key={task.id} className="card" style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: 20,
+                                padding: '16px 20px',
+                                borderLeft: `4px solid ${STATUS_COLORS[task.status] || 'var(--border)'}`
+                            }}>
+                                <div style={{ flex: 1 }}>
+                                    <div className="font-heading" style={{ fontSize: 15, fontWeight: 700, marginBottom: 4 }}>{task.title}</div>
+                                    <div style={{ fontSize: 12, color: 'var(--text2)' }}>{task.description || 'Sem descrição'}</div>
+                                </div>
+
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                                    <div style={{ textAlign: 'right' }}>
+                                        <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text)' }}>{task.agent.name}</div>
+                                        <div style={{ fontSize: 10, color: 'var(--text3)', fontFamily: 'var(--mono)' }}>{new Date(task.createdAt).toLocaleDateString()}</div>
+                                    </div>
+                                    <div style={{ width: 32, height: 32, borderRadius: 8, background: 'var(--bg3)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16 }}>
+                                        {task.agent.avatar}
+                                    </div>
+                                </div>
+
+                                <div style={{
+                                    padding: '4px 10px',
+                                    borderRadius: 20,
+                                    fontSize: 10,
+                                    fontWeight: 800,
+                                    textTransform: 'uppercase',
+                                    background: `${STATUS_COLORS[task.status]}22`,
+                                    color: STATUS_COLORS[task.status],
+                                    border: `1px solid ${STATUS_COLORS[task.status]}44`
+                                }}>
+                                    {task.status.replace('_', ' ')}
+                                </div>
+                            </div>
+                        ))}
                     </div>
-                    <div className="modal-footer"><button className="btn btn-ghost" onClick={() => setShowNew(false)}>Cancelar</button><button className="btn btn-primary" onClick={createTask}>Criar Tarefa</button></div>
-                </div>
+                )}
             </div>
         </>
     )
