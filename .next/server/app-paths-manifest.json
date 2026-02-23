@@ -1,8 +1,9 @@
 {
-  "/api/workspace/[folder]/[file]/route": "app/api/workspace/[folder]/[file]/route.js",
-  "/dashboard/backups/page": "app/dashboard/backups/page.js",
-  "/dashboard/agents/page": "app/dashboard/agents/page.js",
+  "/page": "app/page.js",
+  "/api/auth/login/route": "app/api/auth/login/route.js",
+  "/login/page": "app/login/page.js",
   "/dashboard/page": "app/dashboard/page.js",
   "/dashboard/projects/page": "app/dashboard/projects/page.js",
-  "/dashboard/chat/page": "app/dashboard/chat/page.js"
+  "/dashboard/chat/page": "app/dashboard/chat/page.js",
+  "/dashboard/agents/page": "app/dashboard/agents/page.js"
 }
