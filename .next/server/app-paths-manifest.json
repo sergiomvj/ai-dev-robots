@@ -1,15 +1,8 @@
 {
-  "/api/agents/route": "app/api/agents/route.js",
-  "/api/teams/route": "app/api/teams/route.js",
-  "/api/config/llms/route": "app/api/config/llms/route.js",
-  "/api/workspace/route": "app/api/workspace/route.js",
-  "/api/projects/route": "app/api/projects/route.js",
-  "/api/tasks/route": "app/api/tasks/route.js",
-  "/api/backups/files/route": "app/api/backups/files/route.js",
+  "/api/workspace/[folder]/[file]/route": "app/api/workspace/[folder]/[file]/route.js",
   "/dashboard/backups/page": "app/dashboard/backups/page.js",
-  "/dashboard/tasks/page": "app/dashboard/tasks/page.js",
-  "/dashboard/projects/page": "app/dashboard/projects/page.js",
   "/dashboard/agents/page": "app/dashboard/agents/page.js",
-  "/dashboard/chat/page": "app/dashboard/chat/page.js",
-  "/dashboard/page": "app/dashboard/page.js"
+  "/dashboard/page": "app/dashboard/page.js",
+  "/dashboard/projects/page": "app/dashboard/projects/page.js",
+  "/dashboard/chat/page": "app/dashboard/chat/page.js"
 }
