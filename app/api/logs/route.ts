@@ -16,7 +16,7 @@ export async function GET(req: NextRequest) {
       where,
       orderBy: { createdAt: 'desc' },
       take: limit,
-      include: { agent: { select: { name: true } } },
+      include: { agent: { select: { name: true, avatar: true } } },
     }),
     prisma.log.count({ where }),
   ])

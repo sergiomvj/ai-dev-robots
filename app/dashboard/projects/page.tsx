@@ -15,13 +15,31 @@ interface Project {
 export default function ProjectsPage() {
     const [projects, setProjects] = useState<Project[]>([])
     const [loading, setLoading] = useState(true)
+    const [showModal, setShowModal] = useState(false)
+    const [newData, setNewData] = useState({ name: '', description: '', status: 'active' })
 
     async function load() {
         setLoading(true)
         const res = await fetch('/api/projects')
-        const data = await res.json()
-        if (Array.isArray(data)) setProjects(data)
+        if (res.ok) {
+            const data = await res.json()
+            if (Array.isArray(data)) setProjects(data)
+        }
         setLoading(false)
+    }
+
+    async function handleCreate() {
+        if (!newData.name) return
+        const res = await fetch('/api/projects', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(newData)
+        })
+        if (res.ok) {
+            setShowModal(false)
+            setNewData({ name: '', description: '', status: 'active' })
+            load()
+        }
     }
 
     useEffect(() => {
@@ -33,7 +51,7 @@ export default function ProjectsPage() {
             <Topbar
                 title="Projetos & Iniciativas"
                 subtitle={`${projects.length} projetos ativos no momento`}
-                actions={<button className="btn btn-primary">+ Novo Projeto</button>}
+                actions={<button className="btn btn-primary" onClick={() => setShowModal(true)}>+ Novo Projeto</button>}
             />
 
             <div className="content">
@@ -44,8 +62,8 @@ export default function ProjectsPage() {
                 ) : (
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))', gap: 16 }}>
                         {projects.map(project => {
-                            const total = project.tasks.length
-                            const done = project.tasks.filter(t => t.status === 'done').length
+                            const total = project.tasks?.length || 0
+                            const done = project.tasks?.filter(t => t.status === 'done').length || 0
                             const progress = total > 0 ? Math.round((done / total) * 100) : 0
 
                             return (
@@ -56,7 +74,7 @@ export default function ProjectsPage() {
                                             <div style={{ fontSize: 12, color: 'var(--text2)', marginTop: 4 }}>{project.description || 'Sem descrição detalhada'}</div>
                                         </div>
                                         <div style={{ padding: '4px 8px', background: 'var(--bg3)', borderRadius: 6, fontSize: 10, fontFamily: 'var(--mono)', fontWeight: 700, color: 'var(--accent)' }}>
-                                            {project.status.toUpperCase()}
+                                            {(project.status || 'ACTIVE').toUpperCase()}
                                         </div>
                                     </div>
 
@@ -80,6 +98,52 @@ export default function ProjectsPage() {
                     </div>
                 )}
             </div>
+
+            {/* Modal Novo Projeto */}
+            {showModal && (
+                <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
+                    <div className="card" style={{ width: 450, padding: 30 }}>
+                        <h3 className="font-heading" style={{ fontSize: 20, marginBottom: 20 }}>🔥 Novo Projeto</h3>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                            <div>
+                                <label className="form-label" style={{ fontSize: 10 }}>NOME DO PROJETO</label>
+                                <input
+                                    className="form-input"
+                                    placeholder="Ex: Novo Pipeline de Vendas"
+                                    value={newData.name}
+                                    onChange={e => setNewData({ ...newData, name: e.target.value })}
+                                />
+                            </div>
+                            <div>
+                                <label className="form-label" style={{ fontSize: 10 }}>DESCRIÇÃO</label>
+                                <textarea
+                                    className="form-input"
+                                    style={{ height: 80, resize: 'none' }}
+                                    placeholder="Descreva o objetivo deste projeto..."
+                                    value={newData.description}
+                                    onChange={e => setNewData({ ...newData, description: e.target.value })}
+                                />
+                            </div>
+                            <div>
+                                <label className="form-label" style={{ fontSize: 10 }}>STATUS INICIAL</label>
+                                <select
+                                    className="form-input"
+                                    value={newData.status}
+                                    onChange={e => setNewData({ ...newData, status: e.target.value })}
+                                >
+                                    <option value="active">ATIVO</option>
+                                    <option value="sprint">SPRINT</option>
+                                    <option value="paused">PAUSADO</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div style={{ display: 'flex', gap: 12, marginTop: 30 }}>
+                            <button className="btn btn-primary" style={{ flex: 1 }} onClick={handleCreate}>Criar Projeto</button>
+                            <button className="btn" style={{ flex: 1 }} onClick={() => setShowModal(false)}>Cancelar</button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </>
     )
 }

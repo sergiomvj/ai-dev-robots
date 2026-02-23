@@ -89,12 +89,15 @@ export default async function OverviewPage() {
                             {recentLogs.map((log: any, i: number) => (
                                 <div key={log.id} style={{
                                     display: 'flex',
-                                    alignItems: 'flex-start',
+                                    alignItems: 'center',
                                     gap: 12,
                                     padding: '10px 16px',
                                     borderBottom: i < recentLogs.length - 1 ? '1px solid var(--border)' : 'none',
                                     fontSize: 12,
                                 }}>
+                                    <div style={{ width: 24, height: 24, borderRadius: 6, background: 'var(--bg3)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, flexShrink: 0 }}>
+                                        {log.agent?.avatar || '🤖'}
+                                    </div>
                                     <span style={{
                                         fontFamily: 'var(--mono)',
                                         fontSize: 10,
@@ -102,13 +105,12 @@ export default async function OverviewPage() {
                                         color: levelColors[log.level] || 'var(--text2)',
                                         width: 32,
                                         flexShrink: 0,
-                                        marginTop: 1,
                                     }}>
                                         {log.level}
                                     </span>
-                                    <span style={{ flex: 1, color: 'var(--text2)' }}>{log.message}</span>
+                                    <span style={{ flex: 1, color: 'var(--text2)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{log.message}</span>
                                     <span style={{ color: 'var(--text3)', fontFamily: 'var(--mono)', fontSize: 10, flexShrink: 0 }}>
-                                        {log.agent?.name ?? 'sistema'} · {new Date(log.createdAt).toLocaleTimeString('pt-BR')}
+                                        {log.agent?.name ?? 'sistema'} · {new Date(log.createdAt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
                                     </span>
                                 </div>
                             ))}

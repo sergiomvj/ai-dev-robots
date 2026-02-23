@@ -16,6 +16,7 @@ interface Agent {
     name: string
     avatar: string
     role: string
+    model?: string
 }
 
 export default function ChatPage() {
@@ -41,22 +42,40 @@ export default function ChatPage() {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
     }, [messages])
 
-    const sendMessage = () => {
+    const sendMessage = async () => {
         if (!input.trim()) return
-        const newMsg: Message = { id: Date.now().toString(), role: 'user', content: input, timestamp: new Date().toISOString() }
-        setMessages(prev => [...prev, newMsg])
+        const userMsg: Message = { id: Date.now().toString(), role: 'user', content: input, timestamp: new Date().toISOString() }
+        setMessages(prev => [...prev, userMsg])
+        const userText = input
         setInput('')
 
-        // Simulação de resposta (posteriormente integrar com API de chat real)
-        setTimeout(() => {
+        try {
+            const res = await fetch('/api/chat', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    message: userText,
+                    agentModel: agent?.model
+                })
+            })
+            const data = await res.json()
+
             const reply: Message = {
                 id: (Date.now() + 1).toString(),
                 role: 'agent',
-                content: `Recebi sua mensagem: "${input}". Atualmente meu módulo de processamento direto está em manutenção, mas registrei sua solicitação.`,
+                content: data.content || 'Erro ao processar resposta.',
                 timestamp: new Date().toISOString()
             }
             setMessages(prev => [...prev, reply])
-        }, 1000)
+        } catch (e) {
+            const errorMsg: Message = {
+                id: (Date.now() + 1).toString(),
+                role: 'agent',
+                content: 'Falha na conexão com o serviço de IA.',
+                timestamp: new Date().toISOString()
+            }
+            setMessages(prev => [...prev, errorMsg])
+        }
     }
 
     return (

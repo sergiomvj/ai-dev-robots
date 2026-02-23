@@ -3,7 +3,7 @@ import path from 'path'
 
 const WORKSPACE = process.env.WORKSPACE_PATH || '/home/openclaw/workspace'
 
-export const FOLDERS = ['Commands', 'Skills', 'Hooks', 'Scripts', 'Connectors', 'MCP'] as const
+export const FOLDERS = ['Commands', 'Skills', 'Hooks', 'Scripts', 'Connectors', 'MCP', 'Logs'] as const
 export type Folder = typeof FOLDERS[number]
 
 export function listWorkspace(): Record<string, string[]> {

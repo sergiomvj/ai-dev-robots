@@ -8,7 +8,7 @@ interface Log {
     id: string
     level: string
     message: string
-    agent?: { name: string }
+    agent?: { name: string; avatar: string }
     createdAt: string
 }
 
@@ -81,6 +81,9 @@ export default function LogsPage() {
                                     fontFamily: 'var(--mono)',
                                     alignItems: 'flex-start'
                                 }}>
+                                    <div style={{ width: 24, height: 24, borderRadius: 6, background: 'var(--bg2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, flexShrink: 0 }}>
+                                        {log.agent?.avatar || '🤖'}
+                                    </div>
                                     <span style={{
                                         width: 50,
                                         fontWeight: 800,
