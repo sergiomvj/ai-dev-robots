@@ -15,8 +15,8 @@ const outfit = Outfit({
 })
 
 export const metadata: Metadata = {
-    title: 'AI-DEV-ROBOT Dashboard — FaceBrasil',
-    description: 'Dashboard de controle central para o sistema multi-agente AI-DEV-ROBOT',
+    title: 'AI-ROBOT Dashboard — FaceBrasil',
+    description: 'Dashboard de controle central para o sistema multi-agente AI-ROBOT',
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

@@ -60,7 +60,7 @@ export default function LoginPage() {
                         fontSize: 20,
                     }}>🤖</div>
                     <div>
-                        <div className="font-heading" style={{ fontSize: 18, fontWeight: 800, letterSpacing: '-0.5px', color: 'var(--text)' }}>AI-DEV-ROBOT</div>
+                        <div className="font-heading" style={{ fontSize: 18, fontWeight: 800, letterSpacing: '-0.5px', color: 'var(--text)' }}>AI-ROBOT</div>
                         <div style={{ fontSize: 10, color: 'var(--accent)', fontFamily: 'var(--mono)', fontWeight: 700 }}>dashboard.fbrapps.com</div>
                     </div>
                 </div>

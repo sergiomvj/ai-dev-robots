@@ -41,7 +41,7 @@ export default function Sidebar() {
                         fontSize: 18,
                     }}>🤖</div>
                     <div>
-                        <div className="font-heading" style={{ fontSize: 16, fontWeight: 800, letterSpacing: '-0.5px', color: 'var(--text)' }}>AI-DEV-ROBOT</div>
+                        <div className="font-heading" style={{ fontSize: 16, fontWeight: 800, letterSpacing: '-0.5px', color: 'var(--text)' }}>AI-ROBOT</div>
                         <div style={{ fontSize: 10, color: 'var(--accent)', fontFamily: 'var(--mono)', marginTop: 0, fontWeight: 700, opacity: 0.8 }}>dashboard.fbrapps.com</div>
                     </div>
                 </div>
